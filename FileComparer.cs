@@ -35,6 +35,8 @@ namespace FolderDiffer
             });
             listBox2.DataSource = ignoreFileTypes;
             this.btnCompareFolders.Select();
+            this.txtFolder1.Text = @"C:\git\project1";
+            this.txtFolder2.Text = @"C:\git\project2";
             var d = new Differ();
         }
 
@@ -57,8 +59,14 @@ namespace FolderDiffer
             catch (Exception ex)
             {
                 this.txtFile1Contents.Text = ex.ToString();
+                return;
             }
 
+            if (txtFolder1.Text == txtFolder2.Text)
+            {
+                this.txtFile1Contents.Text = "It's the same folder.";
+                return;
+            }
             var comparisons = OpenFolder(txtFolder1.Text, txtFolder2.Text);
             this.files = comparisons.ToList();
             this.listBox1.DataSource = comparisons.ToList();
@@ -236,9 +244,7 @@ namespace FolderDiffer
         public void ResetComparison()
         {
             string se = string.Empty;
-            this.txtFolder1.Text = @"C:\git\project1";
-            this.txtFolder2.Text = @"C:\git\project2";
-            listBox1.Items.Clear();
+            listBox1.DataSource = null;
             lblFile1Name.Text = se;
             lblFile2Name.Text = se;
             txtFile1Contents.Text = se;
@@ -252,13 +258,18 @@ namespace FolderDiffer
         private void btnOpenFolder1_Click(object sender, EventArgs e)
         {
             var f = new FolderBrowserDialog();
+            if (Directory.Exists(this.txtFolder1.Text)) f.SelectedPath = txtFolder1.Text;
             if (f.ShowDialog() == DialogResult.OK)
-                txtFolder1.Text = f.ToString();
+            {
+                txtFolder1.Text = f.SelectedPath;
+                if (txtFolder2.Text == @"C:\git\project2") txtFolder2.Text = f.SelectedPath;
+            }
         }
 
         private void btnOpenFolder2_Click(object sender, EventArgs e)
         {
             var f = new FolderBrowserDialog();
+            if (Directory.Exists(this.txtFolder2.Text)) f.SelectedPath = txtFolder2.Text;
             if (f.ShowDialog() == DialogResult.OK)
                 txtFolder2.Text = f.ToString();
         }
