@@ -382,10 +382,13 @@ namespace FolderDiffer
                 "<unchanged>";
 
             var diff = this.diffBuilder.BuildDiffModel(c1, c2);
-            return diff.Lines
-                .Where(l => l.Type != DiffPlex.DiffBuilder.Model.ChangeType.Unchanged)
-                .Select(l => string.Concat(l.Position, " ",TypeToString(l.Type), l.Text))
-                .Aggregate((a,b) => string.Concat(a, Environment.NewLine, b));
+            var diffingLines = diff.Lines
+                .Where(l => l.Type != DiffPlex.DiffBuilder.Model.ChangeType.Unchanged);
+            return diffingLines.Any() ?
+                diffingLines
+                .Select(l => string.Concat(l.Position, " ", TypeToString(l.Type), l.Text))
+                .Aggregate((a, b) => string.Concat(a, Environment.NewLine, b))
+            : "(same)";
         }
 
         private void FilterFiles()
