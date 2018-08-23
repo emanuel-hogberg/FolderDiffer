@@ -6,11 +6,14 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Runtime;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Text.RegularExpressions;
 using DiffPlex;
 using DiffPlex.DiffBuilder;
+using Extensions;
 
 namespace FolderDiffer
 {
@@ -42,8 +45,8 @@ namespace FolderDiffer
 
         private List<FileComparison> files = new List<FileComparison>();
         private List<string> ignoreFileTypes = new List<string>();
-        private bool contentDiffFilter = false;
         InlineDiffBuilder diffBuilder = new InlineDiffBuilder(new Differ());
+        Regex regexFilter = null;
 
         private IEnumerable<string> GetIgnoreFolders()
         {
@@ -253,9 +256,26 @@ namespace FolderDiffer
             txtFile2Contents.Text = se;
             txtFile2Created.Text = se;
             txtFile2Modified.Text = se;
+            rdoCompareAllOn.Enabled = false;
+            rdoCompareAllOff.Enabled = false;
+            rdoCompareAllOff.Checked = true;
+            this.lblFile1Created.ForeColor = Color.Black;
+            this.lblFile1Modified.ForeColor = Color.Black;
+            this.lblFile2Created.ForeColor = Color.Black;
+            this.lblFile2Modified.ForeColor = Color.Black;
         }
 
         private void btnOpenFolder1_Click(object sender, EventArgs e)
+        {
+            OpenFolder1();
+        }
+
+        private void OpenFolder1()
+        {
+            OpenFolder2();
+        }
+
+        private void OpenFolder2()
         {
             var f = new FolderBrowserDialog();
             if (Directory.Exists(this.txtFolder1.Text)) f.SelectedPath = txtFolder1.Text;
@@ -283,23 +303,46 @@ namespace FolderDiffer
                 var item2 = (FileComparison)listBox1.SelectedItem;
                 this.lblFile1Name.Text = item.Path1;
                 this.lblFile2Name.Text = item.Path2;
-                if (item.File1Created != item.File2Created)
+                this.lblFile1Created.ForeColor = Color.Black;
+                this.lblFile1Modified.ForeColor = Color.Black;
+                this.lblFile2Created.ForeColor = Color.Black;
+                this.lblFile2Modified.ForeColor = Color.Black;
+                txtFile1Created.Text = item.File1Created.ToString();
+                txtFile1Modified.Text = item.File1Modified.ToString();
+                if (item.File1Created.ToString() != item.File2Created.ToString())
                 {
-                    txtFile1Created.Text = item.File1Created.ToString();
                     txtFile2Created.Text = item.File2Created.ToString();
+                    if (item.File1Created > item.File2Created)
+                    {
+                        lblFile1Created.ForeColor = Color.Red;
+                    }
+                    else
+                    {
+                        lblFile2Created.ForeColor = Color.Red;
+                    }
                 }
-                if (item.File1Modified != item.File2Modified)
+                else
                 {
-                    txtFile1Modified.Text = item.File1Modified.ToString();
+                    txtFile2Created.Text = "(same)";
+                }
+                if (item.File1Modified.ToString() != item.File2Modified.ToString())
+                {
                     txtFile2Modified.Text = item.File2Modified.ToString();
+                    if (item.File1Modified > item.File2Modified)
+                    {
+                        lblFile1Modified.ForeColor = Color.Red;
+                    }
+                    else
+                    {
+                        lblFile2Modified.ForeColor = Color.Red;
+                    }
+                }
+                else
+                {
+                    txtFile2Modified.Text = "(same)";
                 }
 
-                // refactor, lägg till en knapp "compare all" och filterara pådet!!
-                if (true || this.contentDiffFilter)
-                {
-                    ReadFileContents((FileComparison)this.listBox1.SelectedItem);
-                }
-                //ReadFileContents(item);
+                ReadFileContents((FileComparison)this.listBox1.SelectedItem);
             }
             catch (Exception ex)
             {
@@ -395,29 +438,55 @@ namespace FolderDiffer
         {
             if (files.Any())
             {
-                bool doNotFilter = rdoFilterOff.Checked;
-                bool filterOut = rdoFilterExcludeExtensions.Checked;
                 string selected = listBox1.SelectedItem == null ? "" : ((FileComparison)listBox1.SelectedItem).Filename;
-                var filteredFiles = doNotFilter ? this.files.ToList()
-                    : this.files
-                    .Where(f =>
-                        filterOut ? !this.ignoreFileTypes.Select(t => t.ToLower()).Contains(Path.GetExtension(f.Filename).ToLower())
-                        : this.ignoreFileTypes.Select(t => t.ToLower()).Contains(Path.GetExtension(f.Filename).ToLower())
-                    )
-                    .Where(f =>
-                        this.contentDiffFilter && f.ContentDiff == ContentDiff.Diff || !this.contentDiffFilter || !f.File
-                    ).ToList();
+                var filteredFiles =
+                    //FilterFiles(this.files)
+                    this.files
+                    .Filter(FilterFiles)
+                    .Filter(FilterFilesByContent)
+                    .Filter(FilterFilesByRegex)
+                    .ToList();
                 listBox1.DataSource = filteredFiles;
                 if (selected != "" && !this.ignoreFileTypes.Select(t => t.ToLower()).Contains(Path.GetExtension(selected.ToLower())) && filteredFiles.Any(f => f.Filename == selected))
                 {
                     listBox1.SelectedItem = this.files.Where(f => f.Filename == selected).First();
                 }
-                else
+                else if (listBox1.Items.Count > 0)
                 {
                     listBox1.SelectedIndex = 0;
                 }
             }
             this.lblFileCount.Text = string.Format("{0} objects in {1} list", this.listBox1.Items.Count, rdoFilterOff.Checked ? "unfiltered" : "filtered");
+        }
+
+        private IEnumerable<FileComparison> FilterFiles(IEnumerable<FileComparison> files)
+        {
+            bool doNotFilter = rdoFilterOff.Checked;
+            bool filterOut = rdoFilterExcludeExtensions.Checked;
+            if (doNotFilter) return files.ToList();
+            return files
+                .Where(f =>
+                    filterOut ? 
+                        !this.ignoreFileTypes.Select(t => t.ToLower()).Contains(Path.GetExtension(f.Filename).ToLower())
+                    :   this.ignoreFileTypes.Select(t => t.ToLower()).Contains(Path.GetExtension(f.Filename).ToLower())
+                );
+        }
+
+        private IEnumerable<FileComparison> FilterFilesByContent(IEnumerable<FileComparison> files)
+        {
+            if (this.rdoCompareAllOff.Checked || !this.rdoCompareAllOn.Enabled) return files;
+            return files.Where(f =>
+                        f.ContentDiff == ContentDiff.Diff ||
+                        f.ContentDiff == ContentDiff.Error ||
+                        f.ContentDiff == ContentDiff.Unknown ||
+                        !f.File
+                    );
+        }
+
+        private IEnumerable<FileComparison> FilterFilesByRegex(IEnumerable<FileComparison> files)
+        {
+            if (regexFilter == null) return files;
+            return files.Where(f => regexFilter.IsMatch(f.Path1) || regexFilter.IsMatch(f.Path1));
         }
 
         private void rdoFilterOn_CheckedChanged(object sender, EventArgs e)
@@ -427,7 +496,6 @@ namespace FolderDiffer
 
         private void rdoFilterOff_CheckedChanged(object sender, EventArgs e)
         {
-            this.contentDiffFilter = false;
             FilterFiles();
         }
 
@@ -484,6 +552,7 @@ namespace FolderDiffer
 
         private void btnCompareAll_Click(object sender, EventArgs e)
         {
+            if (this.files.Count == 0) return;
             this.progressBar1.Step = 1;
             this.progressBar1.Maximum = this.files.Count();
             this.progressBar1.Value = 0;
@@ -496,7 +565,71 @@ namespace FolderDiffer
             }
             var not_unknown = this.files.Where(f => f.ContentDiff != ContentDiff.Unknown);
             var ls = not_unknown.Select(f => f.ContentDiff.ToString()).ToArray();
-            this.contentDiffFilter = true;
+            this.rdoCompareAllOn.Enabled = true;
+            this.rdoCompareAllOn.Checked = true;
+            this.rdoCompareAllOff.Enabled = true;
+            FilterFiles();
+        }
+
+        private void txtRegexFilter_TextChanged(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void txtRegexFilter_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == '\r')
+                UpdateRegex();
+        }
+
+        private void txtRegexFilter_Leave(object sender, EventArgs e)
+        {
+            UpdateRegex();
+        }
+
+        private void UpdateRegex()
+        {
+            if (string.IsNullOrEmpty(txtRegexFilter.Text))
+            {
+                this.regexFilter = null;
+                return;
+            }
+
+            this.regexFilter = new Regex(this.txtRegexFilter.Text, RegexOptions.IgnoreCase);
+
+            try
+            {
+                // try regex
+                new[] { "test1", "test123" }.ToList()
+                    .ForEach(s =>
+                        this.regexFilter.IsMatch(s));
+                FilterFiles();
+            }
+            catch (Exception ex)
+            {
+                this.txtFile1Contents.Text = "Regex not valid: " + ex.ToString();
+            }
+        }
+
+        private void txtFolder1_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == '\r')
+                OpenFolder1();
+        }
+
+        private void txtFolder2_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == '\r')
+                OpenFolder2();
+        }
+
+        private void rdoCompareAllOn_CheckedChanged(object sender, EventArgs e)
+        {
+            FilterFiles();
+        }
+
+        private void rdoCompareAllOff_CheckedChanged(object sender, EventArgs e)
+        {
             FilterFiles();
         }
     }

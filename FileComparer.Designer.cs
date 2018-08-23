@@ -42,10 +42,10 @@
             this.txtFile1Created = new System.Windows.Forms.TextBox();
             this.txtFile2Created = new System.Windows.Forms.TextBox();
             this.btnCompareFolders = new System.Windows.Forms.Button();
-            this.label1 = new System.Windows.Forms.Label();
-            this.label2 = new System.Windows.Forms.Label();
-            this.label3 = new System.Windows.Forms.Label();
-            this.label4 = new System.Windows.Forms.Label();
+            this.lblFile1Created = new System.Windows.Forms.Label();
+            this.lblFile1Modified = new System.Windows.Forms.Label();
+            this.lblFile2Created = new System.Windows.Forms.Label();
+            this.lblFile2Modified = new System.Windows.Forms.Label();
             this.listBox2 = new System.Windows.Forms.ListBox();
             this.rdoFilterExcludeExtensions = new System.Windows.Forms.RadioButton();
             this.rdoFilterOff = new System.Windows.Forms.RadioButton();
@@ -57,6 +57,12 @@
             this.rdoFilterOnlyTheseExtensions = new System.Windows.Forms.RadioButton();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.lblFileCount = new System.Windows.Forms.Label();
+            this.txtRegexFilter = new System.Windows.Forms.TextBox();
+            this.lblRegexFilter = new System.Windows.Forms.Label();
+            this.rdoCompareAllOn = new System.Windows.Forms.RadioButton();
+            this.rdoCompareAllOff = new System.Windows.Forms.RadioButton();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnOpenFolder1
@@ -85,6 +91,7 @@
             this.txtFolder2.Name = "txtFolder2";
             this.txtFolder2.Size = new System.Drawing.Size(1750, 20);
             this.txtFolder2.TabIndex = 2;
+            this.txtFolder2.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txtFolder2_KeyPress);
             // 
             // txtFolder1
             // 
@@ -92,6 +99,7 @@
             this.txtFolder1.Name = "txtFolder1";
             this.txtFolder1.Size = new System.Drawing.Size(1750, 20);
             this.txtFolder1.TabIndex = 3;
+            this.txtFolder1.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txtFolder1_KeyPress);
             // 
             // listBox1
             // 
@@ -106,6 +114,7 @@
             // 
             this.txtFile1Modified.Location = new System.Drawing.Point(55, 410);
             this.txtFile1Modified.Name = "txtFile1Modified";
+            this.txtFile1Modified.ReadOnly = true;
             this.txtFile1Modified.Size = new System.Drawing.Size(204, 20);
             this.txtFile1Modified.TabIndex = 7;
             // 
@@ -113,6 +122,7 @@
             // 
             this.txtFile2Modified.Location = new System.Drawing.Point(1029, 410);
             this.txtFile2Modified.Name = "txtFile2Modified";
+            this.txtFile2Modified.ReadOnly = true;
             this.txtFile2Modified.Size = new System.Drawing.Size(191, 20);
             this.txtFile2Modified.TabIndex = 8;
             // 
@@ -158,6 +168,7 @@
             // 
             this.txtFile1Created.Location = new System.Drawing.Point(318, 410);
             this.txtFile1Created.Name = "txtFile1Created";
+            this.txtFile1Created.ReadOnly = true;
             this.txtFile1Created.Size = new System.Drawing.Size(204, 20);
             this.txtFile1Created.TabIndex = 7;
             // 
@@ -165,6 +176,7 @@
             // 
             this.txtFile2Created.Location = new System.Drawing.Point(1279, 410);
             this.txtFile2Created.Name = "txtFile2Created";
+            this.txtFile2Created.ReadOnly = true;
             this.txtFile2Created.Size = new System.Drawing.Size(191, 20);
             this.txtFile2Created.TabIndex = 8;
             // 
@@ -178,41 +190,41 @@
             this.btnCompareFolders.UseVisualStyleBackColor = true;
             this.btnCompareFolders.Click += new System.EventHandler(this.btnCompareFolders_Click);
             // 
-            // label1
+            // lblFile1Created
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(5, 413);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(44, 13);
-            this.label1.TabIndex = 4;
-            this.label1.Text = "Created";
+            this.lblFile1Created.AutoSize = true;
+            this.lblFile1Created.Location = new System.Drawing.Point(5, 413);
+            this.lblFile1Created.Name = "lblFile1Created";
+            this.lblFile1Created.Size = new System.Drawing.Size(44, 13);
+            this.lblFile1Created.TabIndex = 4;
+            this.lblFile1Created.Text = "Created";
             // 
-            // label2
+            // lblFile1Modified
             // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(265, 413);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(47, 13);
-            this.label2.TabIndex = 4;
-            this.label2.Text = "Modified";
+            this.lblFile1Modified.AutoSize = true;
+            this.lblFile1Modified.Location = new System.Drawing.Point(265, 413);
+            this.lblFile1Modified.Name = "lblFile1Modified";
+            this.lblFile1Modified.Size = new System.Drawing.Size(47, 13);
+            this.lblFile1Modified.TabIndex = 4;
+            this.lblFile1Modified.Text = "Modified";
             // 
-            // label3
+            // lblFile2Created
             // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(979, 413);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(44, 13);
-            this.label3.TabIndex = 4;
-            this.label3.Text = "Created";
+            this.lblFile2Created.AutoSize = true;
+            this.lblFile2Created.Location = new System.Drawing.Point(979, 413);
+            this.lblFile2Created.Name = "lblFile2Created";
+            this.lblFile2Created.Size = new System.Drawing.Size(44, 13);
+            this.lblFile2Created.TabIndex = 4;
+            this.lblFile2Created.Text = "Created";
             // 
-            // label4
+            // lblFile2Modified
             // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(1226, 413);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(47, 13);
-            this.label4.TabIndex = 4;
-            this.label4.Text = "Modified";
+            this.lblFile2Modified.AutoSize = true;
+            this.lblFile2Modified.Location = new System.Drawing.Point(1226, 413);
+            this.lblFile2Modified.Name = "lblFile2Modified";
+            this.lblFile2Modified.Size = new System.Drawing.Size(47, 13);
+            this.lblFile2Modified.TabIndex = 4;
+            this.lblFile2Modified.Text = "Modified";
             // 
             // listBox2
             // 
@@ -301,7 +313,6 @@
             this.rdoFilterOnlyTheseExtensions.Name = "rdoFilterOnlyTheseExtensions";
             this.rdoFilterOnlyTheseExtensions.Size = new System.Drawing.Size(156, 17);
             this.rdoFilterOnlyTheseExtensions.TabIndex = 18;
-            this.rdoFilterOnlyTheseExtensions.TabStop = true;
             this.rdoFilterOnlyTheseExtensions.Text = "Only show these extensions";
             this.rdoFilterOnlyTheseExtensions.UseVisualStyleBackColor = true;
             this.rdoFilterOnlyTheseExtensions.CheckedChanged += new System.EventHandler(this.rdoFilterOnlyTheseExtensions_CheckedChanged);
@@ -322,11 +333,68 @@
             this.lblFileCount.TabIndex = 20;
             this.lblFileCount.Text = "Click to compare folders";
             // 
+            // txtRegexFilter
+            // 
+            this.txtRegexFilter.Location = new System.Drawing.Point(1017, 66);
+            this.txtRegexFilter.Name = "txtRegexFilter";
+            this.txtRegexFilter.Size = new System.Drawing.Size(453, 20);
+            this.txtRegexFilter.TabIndex = 21;
+            this.txtRegexFilter.TextChanged += new System.EventHandler(this.txtRegexFilter_TextChanged);
+            this.txtRegexFilter.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txtRegexFilter_KeyPress);
+            this.txtRegexFilter.Leave += new System.EventHandler(this.txtRegexFilter_Leave);
+            // 
+            // lblRegexFilter
+            // 
+            this.lblRegexFilter.AutoSize = true;
+            this.lblRegexFilter.Location = new System.Drawing.Point(944, 69);
+            this.lblRegexFilter.Name = "lblRegexFilter";
+            this.lblRegexFilter.Size = new System.Drawing.Size(70, 13);
+            this.lblRegexFilter.TabIndex = 22;
+            this.lblRegexFilter.Text = "lblRegexFilter";
+            // 
+            // rdoCompareAllOn
+            // 
+            this.rdoCompareAllOn.AutoSize = true;
+            this.rdoCompareAllOn.Checked = true;
+            this.rdoCompareAllOn.Enabled = false;
+            this.rdoCompareAllOn.Location = new System.Drawing.Point(5, 3);
+            this.rdoCompareAllOn.Name = "rdoCompareAllOn";
+            this.rdoCompareAllOn.Size = new System.Drawing.Size(39, 17);
+            this.rdoCompareAllOn.TabIndex = 23;
+            this.rdoCompareAllOn.TabStop = true;
+            this.rdoCompareAllOn.Text = "On";
+            this.rdoCompareAllOn.UseVisualStyleBackColor = true;
+            this.rdoCompareAllOn.CheckedChanged += new System.EventHandler(this.rdoCompareAllOn_CheckedChanged);
+            // 
+            // rdoCompareAllOff
+            // 
+            this.rdoCompareAllOff.AutoSize = true;
+            this.rdoCompareAllOff.Enabled = false;
+            this.rdoCompareAllOff.Location = new System.Drawing.Point(5, 26);
+            this.rdoCompareAllOff.Name = "rdoCompareAllOff";
+            this.rdoCompareAllOff.Size = new System.Drawing.Size(39, 17);
+            this.rdoCompareAllOff.TabIndex = 24;
+            this.rdoCompareAllOff.Text = "Off";
+            this.rdoCompareAllOff.UseVisualStyleBackColor = true;
+            this.rdoCompareAllOff.CheckedChanged += new System.EventHandler(this.rdoCompareAllOff_CheckedChanged);
+            // 
+            // panel1
+            // 
+            this.panel1.Controls.Add(this.rdoCompareAllOn);
+            this.panel1.Controls.Add(this.rdoCompareAllOff);
+            this.panel1.Location = new System.Drawing.Point(929, 437);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(45, 51);
+            this.panel1.TabIndex = 25;
+            // 
             // FileComparer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1883, 1133);
+            this.Controls.Add(this.panel1);
+            this.Controls.Add(this.lblRegexFilter);
+            this.Controls.Add(this.txtRegexFilter);
             this.Controls.Add(this.lblFileCount);
             this.Controls.Add(this.progressBar1);
             this.Controls.Add(this.rdoFilterOnlyTheseExtensions);
@@ -346,10 +414,10 @@
             this.Controls.Add(this.listBox2);
             this.Controls.Add(this.listBox1);
             this.Controls.Add(this.lblFile2Name);
-            this.Controls.Add(this.label4);
-            this.Controls.Add(this.label3);
-            this.Controls.Add(this.label2);
-            this.Controls.Add(this.label1);
+            this.Controls.Add(this.lblFile2Modified);
+            this.Controls.Add(this.lblFile2Created);
+            this.Controls.Add(this.lblFile1Modified);
+            this.Controls.Add(this.lblFile1Created);
             this.Controls.Add(this.lblFile1Name);
             this.Controls.Add(this.txtFolder1);
             this.Controls.Add(this.txtFolder2);
@@ -358,6 +426,8 @@
             this.Controls.Add(this.btnOpenFolder1);
             this.Name = "FileComparer";
             this.Text = "FileComparer";
+            this.panel1.ResumeLayout(false);
+            this.panel1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -379,10 +449,10 @@
         private System.Windows.Forms.TextBox txtFile1Created;
         private System.Windows.Forms.TextBox txtFile2Created;
         private System.Windows.Forms.Button btnCompareFolders;
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Label lblFile1Created;
+        private System.Windows.Forms.Label lblFile1Modified;
+        private System.Windows.Forms.Label lblFile2Created;
+        private System.Windows.Forms.Label lblFile2Modified;
         private System.Windows.Forms.ListBox listBox2;
         private System.Windows.Forms.RadioButton rdoFilterExcludeExtensions;
         private System.Windows.Forms.RadioButton rdoFilterOff;
@@ -394,5 +464,10 @@
         private System.Windows.Forms.RadioButton rdoFilterOnlyTheseExtensions;
         private System.Windows.Forms.ProgressBar progressBar1;
         private System.Windows.Forms.Label lblFileCount;
+        private System.Windows.Forms.TextBox txtRegexFilter;
+        private System.Windows.Forms.Label lblRegexFilter;
+        private System.Windows.Forms.RadioButton rdoCompareAllOn;
+        private System.Windows.Forms.RadioButton rdoCompareAllOff;
+        private System.Windows.Forms.Panel panel1;
     }
 }
