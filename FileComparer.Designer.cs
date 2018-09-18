@@ -62,6 +62,8 @@
             this.rdoCompareAllOn = new System.Windows.Forms.RadioButton();
             this.rdoCompareAllOff = new System.Windows.Forms.RadioButton();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.lblModDateFilter = new System.Windows.Forms.Label();
+            this.txtModifiedAfterFilter = new System.Windows.Forms.TextBox();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -335,9 +337,9 @@
             // 
             // txtRegexFilter
             // 
-            this.txtRegexFilter.Location = new System.Drawing.Point(1017, 66);
+            this.txtRegexFilter.Location = new System.Drawing.Point(1151, 66);
             this.txtRegexFilter.Name = "txtRegexFilter";
-            this.txtRegexFilter.Size = new System.Drawing.Size(453, 20);
+            this.txtRegexFilter.Size = new System.Drawing.Size(319, 20);
             this.txtRegexFilter.TabIndex = 21;
             this.txtRegexFilter.TextChanged += new System.EventHandler(this.txtRegexFilter_TextChanged);
             this.txtRegexFilter.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txtRegexFilter_KeyPress);
@@ -346,11 +348,11 @@
             // lblRegexFilter
             // 
             this.lblRegexFilter.AutoSize = true;
-            this.lblRegexFilter.Location = new System.Drawing.Point(944, 69);
+            this.lblRegexFilter.Location = new System.Drawing.Point(1082, 69);
             this.lblRegexFilter.Name = "lblRegexFilter";
-            this.lblRegexFilter.Size = new System.Drawing.Size(70, 13);
+            this.lblRegexFilter.Size = new System.Drawing.Size(63, 13);
             this.lblRegexFilter.TabIndex = 22;
-            this.lblRegexFilter.Text = "lblRegexFilter";
+            this.lblRegexFilter.Text = "Regex filter:";
             // 
             // rdoCompareAllOn
             // 
@@ -387,11 +389,32 @@
             this.panel1.Size = new System.Drawing.Size(45, 51);
             this.panel1.TabIndex = 25;
             // 
+            // lblModDateFilter
+            // 
+            this.lblModDateFilter.AutoSize = true;
+            this.lblModDateFilter.Location = new System.Drawing.Point(854, 69);
+            this.lblModDateFilter.Name = "lblModDateFilter";
+            this.lblModDateFilter.Size = new System.Drawing.Size(74, 13);
+            this.lblModDateFilter.TabIndex = 26;
+            this.lblModDateFilter.Text = "Modified after:";
+            // 
+            // txtModifiedAfterFilter
+            // 
+            this.txtModifiedAfterFilter.Location = new System.Drawing.Point(934, 66);
+            this.txtModifiedAfterFilter.Name = "txtModifiedAfterFilter";
+            this.txtModifiedAfterFilter.Size = new System.Drawing.Size(142, 20);
+            this.txtModifiedAfterFilter.TabIndex = 27;
+            this.txtModifiedAfterFilter.Enter += new System.EventHandler(this.txtModifiedAfterFilter_Enter);
+            this.txtModifiedAfterFilter.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txtModifiedAfterFilter_KeyPress);
+            this.txtModifiedAfterFilter.Leave += new System.EventHandler(this.txtModifiedAfterFilter_Leave);
+            // 
             // FileComparer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1883, 1133);
+            this.Controls.Add(this.txtModifiedAfterFilter);
+            this.Controls.Add(this.lblModDateFilter);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.lblRegexFilter);
             this.Controls.Add(this.txtRegexFilter);
@@ -469,5 +492,7 @@
         private System.Windows.Forms.RadioButton rdoCompareAllOn;
         private System.Windows.Forms.RadioButton rdoCompareAllOff;
         private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Label lblModDateFilter;
+        private System.Windows.Forms.TextBox txtModifiedAfterFilter;
     }
 }

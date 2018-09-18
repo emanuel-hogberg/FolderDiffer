@@ -48,12 +48,19 @@ namespace FolderDiffer
         InlineDiffBuilder diffBuilder = new InlineDiffBuilder(new Differ());
         Regex regexFilter = null;
 
+        public DateTime? modifiedAfterFilter { get; private set; }
+
         private IEnumerable<string> GetIgnoreFolders()
         {
             return ignoreFileTypes.Where(t => t.StartsWith("\\")).Select(t => t.Substring(1).ToLower());
         }
 
         private void btnCompareFolders_Click(object sender, EventArgs e)
+        {
+            CompareFolders();
+        }
+
+        private void CompareFolders()
         {
             try
             {
@@ -270,13 +277,14 @@ namespace FolderDiffer
             OpenFolder1();
         }
 
-        private void OpenFolder1()
+        private void btnOpenFolder2_Click(object sender, EventArgs e)
         {
             OpenFolder2();
         }
 
-        private void OpenFolder2()
+        private void OpenFolder1()
         {
+            this.txtFolder1.Text = this.txtFolder1.Text.Replace("/", "\\");
             var f = new FolderBrowserDialog();
             if (Directory.Exists(this.txtFolder1.Text)) f.SelectedPath = txtFolder1.Text;
             if (f.ShowDialog() == DialogResult.OK)
@@ -286,8 +294,9 @@ namespace FolderDiffer
             }
         }
 
-        private void btnOpenFolder2_Click(object sender, EventArgs e)
+        private void OpenFolder2()
         {
+            this.txtFolder2.Text = this.txtFolder2.Text.Replace("/", "\\");
             var f = new FolderBrowserDialog();
             if (Directory.Exists(this.txtFolder2.Text)) f.SelectedPath = txtFolder2.Text;
             if (f.ShowDialog() == DialogResult.OK)
@@ -445,6 +454,7 @@ namespace FolderDiffer
                     .Filter(FilterFiles)
                     .Filter(FilterFilesByContent)
                     .Filter(FilterFilesByRegex)
+                    .Filter(FilterFilesByModifiedDate)
                     .ToList();
                 listBox1.DataSource = filteredFiles;
                 if (selected != "" && !this.ignoreFileTypes.Select(t => t.ToLower()).Contains(Path.GetExtension(selected.ToLower())) && filteredFiles.Any(f => f.Filename == selected))
@@ -473,21 +483,19 @@ namespace FolderDiffer
         }
 
         private IEnumerable<FileComparison> FilterFilesByContent(IEnumerable<FileComparison> files)
-        {
-            if (this.rdoCompareAllOff.Checked || !this.rdoCompareAllOn.Enabled) return files;
-            return files.Where(f =>
-                        f.ContentDiff == ContentDiff.Diff ||
-                        f.ContentDiff == ContentDiff.Error ||
-                        f.ContentDiff == ContentDiff.Unknown ||
-                        !f.File
-                    );
-        }
+            => (this.rdoCompareAllOff.Checked || !this.rdoCompareAllOn.Enabled) ? files
+            : files.Where(f =>
+                f.ContentDiff == ContentDiff.Diff ||
+                f.ContentDiff == ContentDiff.Error ||
+                f.ContentDiff == ContentDiff.Unknown ||
+                !f.File
+            );
 
         private IEnumerable<FileComparison> FilterFilesByRegex(IEnumerable<FileComparison> files)
-        {
-            if (regexFilter == null) return files;
-            return files.Where(f => regexFilter.IsMatch(f.Path1) || regexFilter.IsMatch(f.Path1));
-        }
+            => regexFilter != null ? files.Where(f => regexFilter.IsMatch(f.Path1) || regexFilter.IsMatch(f.Path1)) : files;
+
+        private IEnumerable<FileComparison> FilterFilesByModifiedDate(IEnumerable<FileComparison> files)
+            => modifiedAfterFilter.HasValue ? files.Where(f => f.File1Modified >= modifiedAfterFilter.Value || f.File2Modified >= modifiedAfterFilter.Value) : files;
 
         private void rdoFilterOn_CheckedChanged(object sender, EventArgs e)
         {
@@ -620,7 +628,17 @@ namespace FolderDiffer
         private void txtFolder2_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (e.KeyChar == '\r')
-                OpenFolder2();
+            {
+
+                if (!string.IsNullOrWhiteSpace(txtFolder2.Text) && Directory.Exists(txtFolder2.Text))
+                {
+                    CompareFolders();
+                }
+                else
+                {
+                    OpenFolder2();
+                }
+            }
         }
 
         private void rdoCompareAllOn_CheckedChanged(object sender, EventArgs e)
@@ -631,6 +649,43 @@ namespace FolderDiffer
         private void rdoCompareAllOff_CheckedChanged(object sender, EventArgs e)
         {
             FilterFiles();
+        }
+
+        private void txtModifiedAfterFilter_Enter(object sender, EventArgs e)
+        {
+            this.txtModifiedAfterFilter.Text = DateTime.Today.ToString();
+        }
+
+        private void txtModifiedAfterFilter_Leave(object sender, EventArgs e)
+        {
+            UpdateModifiedAfterFilter();
+        }
+
+        private void txtModifiedAfterFilter_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == '\r')
+                UpdateModifiedAfterFilter();
+        }
+
+        private void UpdateModifiedAfterFilter()
+        {
+            this.txtModifiedAfterFilter.ForeColor = Color.Black;
+            if (string.IsNullOrEmpty(txtModifiedAfterFilter.Text))
+            {
+                this.modifiedAfterFilter = null;
+                return;
+            }
+
+            if (DateTime.TryParse(this.txtModifiedAfterFilter.Text, out DateTime result))
+            {
+                this.modifiedAfterFilter = result;
+                FilterFiles();
+            }
+            else
+            {
+                this.txtModifiedAfterFilter.ForeColor = Color.Red;
+            }
+
         }
     }
 }
