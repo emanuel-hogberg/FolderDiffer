@@ -300,7 +300,7 @@ namespace FolderDiffer
             var f = new FolderBrowserDialog();
             if (Directory.Exists(this.txtFolder2.Text)) f.SelectedPath = txtFolder2.Text;
             if (f.ShowDialog() == DialogResult.OK)
-                txtFolder2.Text = f.ToString();
+                txtFolder2.Text = f.SelectedPath;
         }
 
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
