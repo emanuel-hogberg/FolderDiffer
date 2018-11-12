@@ -80,6 +80,7 @@ namespace FolderDiffer
             var comparisons = OpenFolder(txtFolder1.Text, txtFolder2.Text);
             this.files = comparisons.ToList();
             this.listBox1.DataSource = comparisons.ToList();
+            InitDateTreeNodes();
             FilterFiles();
         }
 
@@ -270,6 +271,7 @@ namespace FolderDiffer
             this.lblFile1Modified.ForeColor = Color.Black;
             this.lblFile2Created.ForeColor = Color.Black;
             this.lblFile2Modified.ForeColor = Color.Black;
+            treeDates.Nodes.Clear();
         }
 
         private void btnOpenFolder1_Click(object sender, EventArgs e)
@@ -685,7 +687,42 @@ namespace FolderDiffer
             {
                 this.txtModifiedAfterFilter.ForeColor = Color.Red;
             }
+        }
 
+        private void InitDateTreeNodes()
+        {
+            var modifiedFiles = this.files
+                .Select(file => new { Mod1 = file.File1Modified > file.File1Created ? file.File1Modified : file.File1Created, Mod2 = file.File2Modified > file.File2Created ? file.File2Modified : file.File2Created, File = file })
+                .Select(f => new { Modified = f.Mod1 > f.Mod2 ? f.Mod2 : f.Mod1, File = f.File })
+                .Where(f => f.File.File)
+                .ToArray();
+            var modDays = modifiedFiles
+                .Select(f => f.Modified)
+                .GroupBy(d => d.Date.ToString("yyyy-MM-dd"), d => d.ToString("HH:mm"))
+                .OrderByDescending(g => g.Key);
+
+            var nodes = modDays
+                .Select(day =>
+                    new TreeNode(day.Key,
+                        day
+                        .OrderByDescending(d => d)
+                        .Distinct()
+                        .Select(date => new TreeNode(date))
+                        .ToArray()
+                    )
+                )
+                .ToArray();
+            treeDates.Nodes.AddRange(nodes);
+        }
+
+        private void treeDates_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
+        {
+            string mod = e.Node.Text;
+            if (mod.Length < 10 && e.Node.Parent != null)
+                mod = string.Concat(e.Node.Parent.Text, " ", mod);
+
+            txtModifiedAfterFilter.Text = mod;
+            UpdateModifiedAfterFilter();
         }
     }
 }

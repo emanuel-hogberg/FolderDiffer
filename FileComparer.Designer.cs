@@ -64,6 +64,7 @@
             this.panel1 = new System.Windows.Forms.Panel();
             this.lblModDateFilter = new System.Windows.Forms.Label();
             this.txtModifiedAfterFilter = new System.Windows.Forms.TextBox();
+            this.treeDates = new System.Windows.Forms.TreeView();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -231,9 +232,9 @@
             // listBox2
             // 
             this.listBox2.FormattingEnabled = true;
-            this.listBox2.Location = new System.Drawing.Point(1639, 93);
+            this.listBox2.Location = new System.Drawing.Point(1743, 93);
             this.listBox2.Name = "listBox2";
-            this.listBox2.Size = new System.Drawing.Size(232, 290);
+            this.listBox2.Size = new System.Drawing.Size(128, 290);
             this.listBox2.TabIndex = 6;
             this.listBox2.SelectedIndexChanged += new System.EventHandler(this.listBox2_SelectedIndexChanged);
             // 
@@ -263,9 +264,9 @@
             // 
             // btnAddFileType
             // 
-            this.btnAddFileType.Location = new System.Drawing.Point(1639, 389);
+            this.btnAddFileType.Location = new System.Drawing.Point(1728, 389);
             this.btnAddFileType.Name = "btnAddFileType";
-            this.btnAddFileType.Size = new System.Drawing.Size(45, 23);
+            this.btnAddFileType.Size = new System.Drawing.Size(36, 23);
             this.btnAddFileType.TabIndex = 13;
             this.btnAddFileType.Text = "+";
             this.btnAddFileType.UseVisualStyleBackColor = true;
@@ -273,9 +274,9 @@
             // 
             // btnRemoveFileType
             // 
-            this.btnRemoveFileType.Location = new System.Drawing.Point(1828, 389);
+            this.btnRemoveFileType.Location = new System.Drawing.Point(1840, 389);
             this.btnRemoveFileType.Name = "btnRemoveFileType";
-            this.btnRemoveFileType.Size = new System.Drawing.Size(43, 23);
+            this.btnRemoveFileType.Size = new System.Drawing.Size(31, 23);
             this.btnRemoveFileType.TabIndex = 14;
             this.btnRemoveFileType.Text = "-";
             this.btnRemoveFileType.UseVisualStyleBackColor = true;
@@ -283,9 +284,9 @@
             // 
             // txtAddFileType
             // 
-            this.txtAddFileType.Location = new System.Drawing.Point(1690, 391);
+            this.txtAddFileType.Location = new System.Drawing.Point(1763, 391);
             this.txtAddFileType.Name = "txtAddFileType";
-            this.txtAddFileType.Size = new System.Drawing.Size(132, 20);
+            this.txtAddFileType.Size = new System.Drawing.Size(79, 20);
             this.txtAddFileType.TabIndex = 15;
             // 
             // btnNotepadPlusPlus
@@ -392,7 +393,7 @@
             // lblModDateFilter
             // 
             this.lblModDateFilter.AutoSize = true;
-            this.lblModDateFilter.Location = new System.Drawing.Point(854, 69);
+            this.lblModDateFilter.Location = new System.Drawing.Point(1621, 95);
             this.lblModDateFilter.Name = "lblModDateFilter";
             this.lblModDateFilter.Size = new System.Drawing.Size(74, 13);
             this.lblModDateFilter.TabIndex = 26;
@@ -400,19 +401,28 @@
             // 
             // txtModifiedAfterFilter
             // 
-            this.txtModifiedAfterFilter.Location = new System.Drawing.Point(934, 66);
+            this.txtModifiedAfterFilter.Location = new System.Drawing.Point(1621, 111);
             this.txtModifiedAfterFilter.Name = "txtModifiedAfterFilter";
-            this.txtModifiedAfterFilter.Size = new System.Drawing.Size(142, 20);
+            this.txtModifiedAfterFilter.Size = new System.Drawing.Size(116, 20);
             this.txtModifiedAfterFilter.TabIndex = 27;
             this.txtModifiedAfterFilter.Enter += new System.EventHandler(this.txtModifiedAfterFilter_Enter);
             this.txtModifiedAfterFilter.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txtModifiedAfterFilter_KeyPress);
             this.txtModifiedAfterFilter.Leave += new System.EventHandler(this.txtModifiedAfterFilter_Leave);
+            // 
+            // treeDates
+            // 
+            this.treeDates.Location = new System.Drawing.Point(1621, 137);
+            this.treeDates.Name = "treeDates";
+            this.treeDates.Size = new System.Drawing.Size(116, 248);
+            this.treeDates.TabIndex = 28;
+            this.treeDates.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeDates_NodeMouseClick);
             // 
             // FileComparer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1883, 1133);
+            this.Controls.Add(this.treeDates);
             this.Controls.Add(this.txtModifiedAfterFilter);
             this.Controls.Add(this.lblModDateFilter);
             this.Controls.Add(this.panel1);
@@ -494,5 +504,6 @@
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Label lblModDateFilter;
         private System.Windows.Forms.TextBox txtModifiedAfterFilter;
+        private System.Windows.Forms.TreeView treeDates;
     }
 }
