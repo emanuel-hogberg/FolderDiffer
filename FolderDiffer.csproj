@@ -54,6 +54,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ContentDiffEnum.cs" />
+    <Compile Include="FileComparison.cs" />
+    <Compile Include="Filter.cs" />
+    <Compile Include="FileComparisonModel.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="FileComparer.cs">
       <SubType>Form</SubType>
@@ -61,6 +65,10 @@
     <Compile Include="FileComparer.Designer.cs">
       <DependentUpon>FileComparer.cs</DependentUpon>
     </Compile>
+    <Compile Include="Filters\ModifiedDateFilter.cs" />
+    <Compile Include="Filters\ContentFilter.cs" />
+    <Compile Include="Filters\RegexFilter.cs" />
+    <Compile Include="Filters\FileExtensionFilter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="FileComparer.resx">
@@ -89,5 +97,6 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

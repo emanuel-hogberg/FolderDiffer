@@ -1,4 +1,7 @@
-﻿using System;
+﻿using DiffPlex;
+using DiffPlex.DiffBuilder;using System;
+using Extensions;
+using FolderDiffer.Filters;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -11,9 +14,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Text.RegularExpressions;
-using DiffPlex;
-using DiffPlex.DiffBuilder;
-using Extensions;
 
 namespace FolderDiffer
 {
@@ -21,10 +21,16 @@ namespace FolderDiffer
     {
         public FileComparer()
         {
+            model = new FileComparisonModel()
+                .AddFilter(new FileExtensionFilter().AssignForward(out fileExtensionFilter))
+                .AddFilter(new ContentFilter().AssignForward(out contentFilter))
+                .AddFilter(new RegexFilter().AssignForward(out regexFilter))
+                .AddFilter(new ModifiedDateFilter().AssignForward(out modifiedAfterFilter));
+
             InitializeComponent();
             ResetComparison();
             rdoFilterOff.Checked = true;
-            ignoreFileTypes.AddRange(new string[]
+            fileExtensionFilter.IgnoreFileTypes.AddRange(new string[]
             {
                 ".csproj",
                 ".xaml",
@@ -36,24 +42,20 @@ namespace FolderDiffer
                 "\\release",
                 ".appxmanifest"
             });
-            listBox2.DataSource = ignoreFileTypes;
-            this.btnCompareFolders.Select();
-            this.txtFolder1.Text = @"C:\git\project1";
-            this.txtFolder2.Text = @"C:\git\project2";
+            listBox2.DataSource = fileExtensionFilter.IgnoreFileTypes;
+            btnCompareFolders.Select();
+            txtFolder1.Text = @"C:\git\project1";
+            txtFolder2.Text = @"C:\git\project2";
             var d = new Differ();
         }
 
-        private List<FileComparison> files = new List<FileComparison>();
-        private List<string> ignoreFileTypes = new List<string>();
+        FileComparisonModel model;
         InlineDiffBuilder diffBuilder = new InlineDiffBuilder(new Differ());
-        Regex regexFilter = null;
 
-        public DateTime? modifiedAfterFilter { get; private set; }
-
-        private IEnumerable<string> GetIgnoreFolders()
-        {
-            return ignoreFileTypes.Where(t => t.StartsWith("\\")).Select(t => t.Substring(1).ToLower());
-        }
+        RegexFilter regexFilter;
+        ModifiedDateFilter modifiedAfterFilter;
+        ContentFilter contentFilter;
+        FileExtensionFilter fileExtensionFilter;
 
         private void btnCompareFolders_Click(object sender, EventArgs e)
         {
@@ -68,18 +70,18 @@ namespace FolderDiffer
             }
             catch (Exception ex)
             {
-                this.txtFile1Contents.Text = ex.ToString();
+                txtFile1Contents.Text = ex.ToString();
                 return;
             }
 
             if (txtFolder1.Text == txtFolder2.Text)
             {
-                this.txtFile1Contents.Text = "It's the same folder.";
+                txtFile1Contents.Text = "It's the same folder.";
                 return;
             }
             var comparisons = OpenFolder(txtFolder1.Text, txtFolder2.Text);
-            this.files = comparisons.ToList();
-            this.listBox1.DataSource = comparisons.ToList();
+            model.Files = comparisons.ToList();
+            listBox1.DataSource = comparisons.ToList();
             InitDateTreeNodes();
             FilterFiles();
         }
@@ -106,7 +108,8 @@ namespace FolderDiffer
                 .Where(f => !folders1.Select(p => Path.GetFileName(p)).Contains(Path.GetFileName(f)))
                 );
 
-            foreach(string folder in folders1.Where(f => !missingFolders.Contains(f) && !GetIgnoreFolders().Contains(Path.GetFileName(f).ToLower())))
+            foreach(string folder in folders1
+                .Where(f => !missingFolders.Contains(f) && !fileExtensionFilter.GetIgnoreFolders().Contains(Path.GetFileName(f).ToLower())))
             {
                 comparisons.AddRange(
                     OpenFolder(folder,
@@ -140,7 +143,7 @@ namespace FolderDiffer
             }
             catch (Exception ex)
             {
-                this.txtFile1Contents.Text = ex.ToString();
+                txtFile1Contents.Text = ex.ToString();
             }
 
             try
@@ -203,53 +206,9 @@ namespace FolderDiffer
             }
             catch (Exception ex)
             {
-                this.txtFile1Contents.Text = ex.ToString();
+                txtFile1Contents.Text = ex.ToString();
             }
             return new List<FileComparison>();
-        }
-
-        class FileComparison
-        {
-            public string Filename { get; set; }
-            public string Path1 { get; set; }
-            public string Path2 { get; set; }
-            public DateTime File1Modified { get; set; }
-            public DateTime File1Created { get; set; }
-            public DateTime File2Modified { get; set; }
-            public DateTime File2Created { get; set; }
-            public bool File { get; set; }
-            public bool MissingFolder { get; set; }
-            public bool MissingFile { get; set; }
-            public ContentDiff ContentDiff { get; set; }
-            public bool Diff
-            {
-                get
-                {
-                    if (File)
-                        return File1Modified != File2Modified || File1Created != File2Created;
-                    return true;
-                }
-            }
-            public override string ToString()
-            {
-                return string.Concat(File ? this.Path1
-                    : string.Concat(
-                        MissingFolder ? "MISSING FOLDER: " : "",
-                        MissingFile ? "MISSING FILE: " : "",
-                        Path1
-                    ),
-                "(", this.Diff ? "diff " : "", this.ContentDiff.ToString(),")");
-            }
-        }
-
-        enum ContentDiff
-        {
-            Unknown,
-            Checking,
-            Diff,
-            Same,
-            Error,
-            NotAFile
         }
 
         public void ResetComparison()
@@ -267,10 +226,10 @@ namespace FolderDiffer
             rdoCompareAllOn.Enabled = false;
             rdoCompareAllOff.Enabled = false;
             rdoCompareAllOff.Checked = true;
-            this.lblFile1Created.ForeColor = Color.Black;
-            this.lblFile1Modified.ForeColor = Color.Black;
-            this.lblFile2Created.ForeColor = Color.Black;
-            this.lblFile2Modified.ForeColor = Color.Black;
+            lblFile1Created.ForeColor = Color.Black;
+            lblFile1Modified.ForeColor = Color.Black;
+            lblFile2Created.ForeColor = Color.Black;
+            lblFile2Modified.ForeColor = Color.Black;
             treeDates.Nodes.Clear();
         }
 
@@ -286,9 +245,9 @@ namespace FolderDiffer
 
         private void OpenFolder1()
         {
-            this.txtFolder1.Text = this.txtFolder1.Text.Replace("/", "\\");
+            txtFolder1.Text = txtFolder1.Text.Replace("/", "\\");
             var f = new FolderBrowserDialog();
-            if (Directory.Exists(this.txtFolder1.Text)) f.SelectedPath = txtFolder1.Text;
+            if (Directory.Exists(txtFolder1.Text)) f.SelectedPath = txtFolder1.Text;
             if (f.ShowDialog() == DialogResult.OK)
             {
                 txtFolder1.Text = f.SelectedPath;
@@ -298,9 +257,9 @@ namespace FolderDiffer
 
         private void OpenFolder2()
         {
-            this.txtFolder2.Text = this.txtFolder2.Text.Replace("/", "\\");
+            txtFolder2.Text = txtFolder2.Text.Replace("/", "\\");
             var f = new FolderBrowserDialog();
-            if (Directory.Exists(this.txtFolder2.Text)) f.SelectedPath = txtFolder2.Text;
+            if (Directory.Exists(txtFolder2.Text)) f.SelectedPath = txtFolder2.Text;
             if (f.ShowDialog() == DialogResult.OK)
                 txtFolder2.Text = f.SelectedPath;
         }
@@ -312,12 +271,12 @@ namespace FolderDiffer
                 if (listBox1.Items.Count == 0) return;
                 var item = (FileComparison)listBox1.Items[listBox1.SelectedIndex];
                 var item2 = (FileComparison)listBox1.SelectedItem;
-                this.lblFile1Name.Text = item.Path1;
-                this.lblFile2Name.Text = item.Path2;
-                this.lblFile1Created.ForeColor = Color.Black;
-                this.lblFile1Modified.ForeColor = Color.Black;
-                this.lblFile2Created.ForeColor = Color.Black;
-                this.lblFile2Modified.ForeColor = Color.Black;
+                lblFile1Name.Text = item.Path1;
+                lblFile2Name.Text = item.Path2;
+                lblFile1Created.ForeColor = Color.Black;
+                lblFile1Modified.ForeColor = Color.Black;
+                lblFile2Created.ForeColor = Color.Black;
+                lblFile2Modified.ForeColor = Color.Black;
                 txtFile1Created.Text = item.File1Created.ToString();
                 txtFile1Modified.Text = item.File1Modified.ToString();
                 if (item.File1Created.ToString() != item.File2Created.ToString())
@@ -353,7 +312,7 @@ namespace FolderDiffer
                     txtFile2Modified.Text = "(same)";
                 }
 
-                ReadFileContents((FileComparison)this.listBox1.SelectedItem);
+                ReadFileContents((FileComparison)listBox1.SelectedItem);
             }
             catch (Exception ex)
             {
@@ -373,7 +332,7 @@ namespace FolderDiffer
                 }
                 catch (Exception ex)
                 {
-                    this.txtFile1Contents.Text = "Unable to open file: " + ex.ToString();
+                    txtFile1Contents.Text = "Unable to open file: " + ex.ToString();
                     item.ContentDiff = ContentDiff.Error;
                     return item.ContentDiff;
                 }
@@ -384,7 +343,7 @@ namespace FolderDiffer
                 }
                 catch (Exception ex)
                 {
-                    this.txtFile2Contents.Text = "Unable to open file: " + ex.ToString();
+                    txtFile2Contents.Text = "Unable to open file: " + ex.ToString();
                     item.ContentDiff = ContentDiff.Error;
                     return item.ContentDiff;
                 }
@@ -394,7 +353,7 @@ namespace FolderDiffer
                 item.ContentDiff = ContentDiff.NotAFile;
                 if (showFileContents)
                 {
-                    this.txtFile1Contents.Text = item.MissingFile ? "Missing file" : "Missing folder";
+                    txtFile1Contents.Text = item.MissingFile ? "Missing file" : "Missing folder";
                 }
             }
             if (c1 != c2)
@@ -405,13 +364,13 @@ namespace FolderDiffer
 
                     try
                     {
-                        this.txtFile1Contents.Text = Diff(c1, c2) + Environment.NewLine + Environment.NewLine + c1;
+                        txtFile1Contents.Text = Diff(c1, c2) + Environment.NewLine + Environment.NewLine + c1;
                     }
                     catch (Exception ex)
                     {
-                        this.txtFile1Contents.Text = "Diff failed: " + ex.ToString() + Environment.NewLine + Environment.NewLine + c1;
+                        txtFile1Contents.Text = "Diff failed: " + ex.ToString() + Environment.NewLine + Environment.NewLine + c1;
                     }
-                    this.txtFile2Contents.Text = c2;
+                    txtFile2Contents.Text = c2;
                 }
             }
             else
@@ -419,8 +378,8 @@ namespace FolderDiffer
                 item.ContentDiff = ContentDiff.Same;
                 if (showFileContents)
                 {
-                    this.txtFile1Contents.Text = "(same)";
-                    this.txtFile2Contents.Text = "(same)";
+                    txtFile1Contents.Text = "(same)";
+                    txtFile2Contents.Text = "(same)";
                 }
             }
             return item.ContentDiff;
@@ -435,7 +394,7 @@ namespace FolderDiffer
                 x == DiffPlex.DiffBuilder.Model.ChangeType.Modified ? "m" :
                 "<unchanged>";
 
-            var diff = this.diffBuilder.BuildDiffModel(c1, c2);
+            var diff = diffBuilder.BuildDiffModel(c1, c2);
             var diffingLines = diff.Lines
                 .Where(l => l.Type != DiffPlex.DiffBuilder.Model.ChangeType.Unchanged);
             return diffingLines.Any() ?
@@ -447,102 +406,78 @@ namespace FolderDiffer
 
         private void FilterFiles()
         {
-            if (files.Any())
+            if (model.Files.Any())
             {
                 string selected = listBox1.SelectedItem == null ? "" : ((FileComparison)listBox1.SelectedItem).Filename;
-                var filteredFiles =
-                    //FilterFiles(this.files)
-                    this.files
-                    .Filter(FilterFiles)
-                    .Filter(FilterFilesByContent)
-                    .Filter(FilterFilesByRegex)
-                    .Filter(FilterFilesByModifiedDate)
-                    .ToList();
+                List<FileComparison> filteredFiles = model.FilterFiles();
                 listBox1.DataSource = filteredFiles;
-                if (selected != "" && !this.ignoreFileTypes.Select(t => t.ToLower()).Contains(Path.GetExtension(selected.ToLower())) && filteredFiles.Any(f => f.Filename == selected))
+                var ignoreTypes = fileExtensionFilter.IgnoreFileTypes.Select(t => t.ToLower());
+                bool fileSelected = filteredFiles.Any(f => f.Filename == selected);
+                if (selected != "" && !ignoreTypes.Contains(Path.GetExtension(selected.ToLower())) && fileSelected)
                 {
-                    listBox1.SelectedItem = this.files.Where(f => f.Filename == selected).First();
+                    listBox1.SelectedItem = model.Files.Where(f => f.Filename == selected).First();
                 }
                 else if (listBox1.Items.Count > 0)
                 {
                     listBox1.SelectedIndex = 0;
                 }
             }
-            this.lblFileCount.Text = string.Format("{0} objects in {1} list", this.listBox1.Items.Count, rdoFilterOff.Checked ? "unfiltered" : "filtered");
+            lblFileCount.Text = string.Format("{0} objects in {1} list", listBox1.Items.Count, rdoFilterOff.Checked ? "unfiltered" : "filtered");
         }
 
-        private IEnumerable<FileComparison> FilterFiles(IEnumerable<FileComparison> files)
+        private void SetupFileExtensionFilter()
         {
-            bool doNotFilter = rdoFilterOff.Checked;
-            bool filterOut = rdoFilterExcludeExtensions.Checked;
-            if (doNotFilter) return files.ToList();
-            return files
-                .Where(f =>
-                    filterOut ? 
-                        !this.ignoreFileTypes.Select(t => t.ToLower()).Contains(Path.GetExtension(f.Filename).ToLower())
-                    :   this.ignoreFileTypes.Select(t => t.ToLower()).Contains(Path.GetExtension(f.Filename).ToLower())
-                );
+            fileExtensionFilter.Active = !rdoFilterOff.Checked;
+            fileExtensionFilter.FilterOut = rdoFilterExcludeExtensions.Checked;
         }
-
-        private IEnumerable<FileComparison> FilterFilesByContent(IEnumerable<FileComparison> files)
-            => (this.rdoCompareAllOff.Checked || !this.rdoCompareAllOn.Enabled) ? files
-            : files.Where(f =>
-                f.ContentDiff == ContentDiff.Diff ||
-                f.ContentDiff == ContentDiff.Error ||
-                f.ContentDiff == ContentDiff.Unknown ||
-                !f.File
-            );
-
-        private IEnumerable<FileComparison> FilterFilesByRegex(IEnumerable<FileComparison> files)
-            => regexFilter != null ? files.Where(f => regexFilter.IsMatch(f.Path1) || regexFilter.IsMatch(f.Path1)) : files;
-
-        private IEnumerable<FileComparison> FilterFilesByModifiedDate(IEnumerable<FileComparison> files)
-            => modifiedAfterFilter.HasValue ? files.Where(f => f.File1Modified >= modifiedAfterFilter.Value || f.File2Modified >= modifiedAfterFilter.Value) : files;
 
         private void rdoFilterOn_CheckedChanged(object sender, EventArgs e)
         {
+            SetupFileExtensionFilter();
             FilterFiles();
         }
 
         private void rdoFilterOff_CheckedChanged(object sender, EventArgs e)
         {
+            SetupFileExtensionFilter();
             FilterFiles();
         }
 
         private void rdoFilterOnlyTheseExtensions_CheckedChanged(object sender, EventArgs e)
         {
+            SetupFileExtensionFilter();
             FilterFiles();
         }
 
         private void btnAddFileType_Click(object sender, EventArgs e)
         {
             string ext = txtAddFileType.Text;
-            if (this.ignoreFileTypes.Contains(ext)) return;
-            this.listBox2.DataSource = null;
-            this.ignoreFileTypes.Add(ext);
-            this.listBox2.DataSource = this.ignoreFileTypes;
-            this.listBox2.SelectedItem = ext;
+            if (fileExtensionFilter.IgnoreFileTypes.Contains(ext)) return;
+            listBox2.DataSource = null;
+            fileExtensionFilter.IgnoreFileTypes.Add(ext);
+            listBox2.DataSource = fileExtensionFilter.IgnoreFileTypes;
+            listBox2.SelectedItem = ext;
             FilterFiles();
         }
 
         private void btnRemoveFileType_Click(object sender, EventArgs e)
         {
             string ext = txtAddFileType.Text;
-            if (!this.ignoreFileTypes.Contains(ext)) return;
-            this.listBox2.DataSource = null;
-            this.ignoreFileTypes.Remove(ext);
-            this.listBox2.DataSource = this.ignoreFileTypes;
+            if (!fileExtensionFilter.IgnoreFileTypes.Contains(ext)) return;
+            listBox2.DataSource = null;
+            fileExtensionFilter.IgnoreFileTypes.Remove(ext);
+            listBox2.DataSource = fileExtensionFilter.IgnoreFileTypes;
             FilterFiles();
         }
 
         private void listBox2_SelectedIndexChanged(object sender, EventArgs e)
         {
-            this.txtAddFileType.Text = (string)this.listBox2.SelectedItem;
+            txtAddFileType.Text = (string)listBox2.SelectedItem;
         }
 
         private void btnNotepadPlusPlus_Click(object sender, EventArgs e)
         {
-            var selectedItem = (FileComparison)this.listBox1.SelectedItem;
+            var selectedItem = (FileComparison)listBox1.SelectedItem;
             if (!selectedItem.File) return;
             try
             {
@@ -556,28 +491,28 @@ namespace FolderDiffer
             }
             catch (Exception ex)
             {
-                this.txtFile1Contents.Text = ex.ToString();
+                txtFile1Contents.Text = ex.ToString();
             }
         }
 
         private void btnCompareAll_Click(object sender, EventArgs e)
         {
-            if (this.files.Count == 0) return;
-            this.progressBar1.Step = 1;
-            this.progressBar1.Maximum = this.files.Count();
-            this.progressBar1.Value = 0;
-            foreach (var f in this.files)
+            if (!model.Files.Any()) return;
+            progressBar1.Step = 1;
+            progressBar1.Maximum = model.Files.Count();
+            progressBar1.Value = 0;
+            foreach (var f in model.Files)
             {
                 var d = ReadFileContents(f, false);
-                this.progressBar1.Value++;
-                this.progressBar1.Refresh();
+                progressBar1.Value++;
+                progressBar1.Refresh();
                 string r = "";
             }
-            var not_unknown = this.files.Where(f => f.ContentDiff != ContentDiff.Unknown);
+            var not_unknown = model.Files.Where(f => f.ContentDiff != ContentDiff.Unknown);
             var ls = not_unknown.Select(f => f.ContentDiff.ToString()).ToArray();
-            this.rdoCompareAllOn.Enabled = true;
-            this.rdoCompareAllOn.Checked = true;
-            this.rdoCompareAllOff.Enabled = true;
+            rdoCompareAllOn.Enabled = true;
+            rdoCompareAllOn.Checked = true;
+            rdoCompareAllOff.Enabled = true;
             FilterFiles();
         }
 
@@ -601,23 +536,23 @@ namespace FolderDiffer
         {
             if (string.IsNullOrEmpty(txtRegexFilter.Text))
             {
-                this.regexFilter = null;
+                regexFilter.Regex = null;
                 return;
             }
 
-            this.regexFilter = new Regex(this.txtRegexFilter.Text, RegexOptions.IgnoreCase);
+            regexFilter.Regex = new Regex(txtRegexFilter.Text, RegexOptions.IgnoreCase);
 
             try
             {
                 // try regex
                 new[] { "test1", "test123" }.ToList()
                     .ForEach(s =>
-                        this.regexFilter.IsMatch(s));
+                        regexFilter.Regex.IsMatch(s));
                 FilterFiles();
             }
             catch (Exception ex)
             {
-                this.txtFile1Contents.Text = "Regex not valid: " + ex.ToString();
+                txtFile1Contents.Text = "Regex not valid: " + ex.ToString();
             }
         }
 
@@ -645,6 +580,7 @@ namespace FolderDiffer
 
         private void rdoCompareAllOn_CheckedChanged(object sender, EventArgs e)
         {
+            contentFilter.Active = !rdoCompareAllOff.Checked && rdoCompareAllOn.Enabled;
             FilterFiles();
         }
 
@@ -655,7 +591,7 @@ namespace FolderDiffer
 
         private void txtModifiedAfterFilter_Enter(object sender, EventArgs e)
         {
-            this.txtModifiedAfterFilter.Text = DateTime.Today.ToString();
+            txtModifiedAfterFilter.Text = DateTime.Today.ToString();
         }
 
         private void txtModifiedAfterFilter_Leave(object sender, EventArgs e)
@@ -671,27 +607,27 @@ namespace FolderDiffer
 
         private void UpdateModifiedAfterFilter()
         {
-            this.txtModifiedAfterFilter.ForeColor = Color.Black;
+            txtModifiedAfterFilter.ForeColor = Color.Black;
             if (string.IsNullOrEmpty(txtModifiedAfterFilter.Text))
             {
-                this.modifiedAfterFilter = null;
+                modifiedAfterFilter.Value = null;
                 return;
             }
 
-            if (DateTime.TryParse(this.txtModifiedAfterFilter.Text, out DateTime result))
+            if (DateTime.TryParse(txtModifiedAfterFilter.Text, out DateTime result))
             {
-                this.modifiedAfterFilter = result;
+                modifiedAfterFilter.Value = result;
                 FilterFiles();
             }
             else
             {
-                this.txtModifiedAfterFilter.ForeColor = Color.Red;
+                txtModifiedAfterFilter.ForeColor = Color.Red;
             }
         }
 
         private void InitDateTreeNodes()
         {
-            var modifiedFiles = this.files
+            var modifiedFiles = model.Files
                 .Select(file => new { Mod1 = file.File1Modified > file.File1Created ? file.File1Modified : file.File1Created, Mod2 = file.File2Modified > file.File2Created ? file.File2Modified : file.File2Created, File = file })
                 .Select(f => new { Modified = f.Mod1 > f.Mod2 ? f.Mod2 : f.Mod1, File = f.File })
                 .Where(f => f.File.File)
