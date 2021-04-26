@@ -1,19 +1,16 @@
 ﻿using DiffPlex;
-using DiffPlex.DiffBuilder;using System;
+using DiffPlex.DiffBuilder;
 using Extensions;
 using FolderDiffer.Filters;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Runtime;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
 
 namespace FolderDiffer
 {
@@ -40,7 +37,11 @@ namespace FolderDiffer
                 ".exe",
                 "\\debug",
                 "\\release",
-                ".appxmanifest"
+                ".appxmanifest",
+                "\\.vs",
+                "\\.vscode",
+                "\\.obj",
+                "\\.git",
             });
             listBox2.DataSource = fileExtensionFilter.IgnoreFileTypes;
             btnCompareFolders.Select();
@@ -79,14 +80,16 @@ namespace FolderDiffer
                 txtFile1Contents.Text = "It's the same folder.";
                 return;
             }
-            var comparisons = OpenFolder(txtFolder1.Text, txtFolder2.Text);
+
+            var comparisons = OpenFolder(txtFolder1.Text, txtFolder2.Text, progressBar1);
+
             model.Files = comparisons.ToList();
             listBox1.DataSource = comparisons.ToList();
             InitDateTreeNodes();
             FilterFiles();
         }
 
-        private List<FileComparison> OpenFolder(string folder1, string folder2)
+        private List<FileComparison> OpenFolder(string folder1, string folder2, ProgressBar progressBar = null)
         {
             var comparisons = OpenFiles(folder1, folder2);
 
@@ -96,7 +99,7 @@ namespace FolderDiffer
                 txtFile2Contents.Text = Directory.Exists(folder2) ? folder2 + " exists" : folder2 + " does not exist!";
                 return new List<FileComparison>();
             }
-            
+
             // open all folderse, recursively get comparisons
             var folders1 = Directory.GetDirectories(folder1);
             var folders2 = Directory.GetDirectories(folder2);
@@ -107,9 +110,18 @@ namespace FolderDiffer
                 folders2
                 .Where(f => !folders1.Select(p => Path.GetFileName(p)).Contains(Path.GetFileName(f)))
                 );
+            var traversableFolders = folders1
+                .Where(f => !missingFolders.Contains(f) &&
+                    !fileExtensionFilter.GetIgnoreFolders().Contains(Path.GetFileName(f).ToLower()))
+                .ToList();
 
-            foreach(string folder in folders1
-                .Where(f => !missingFolders.Contains(f) && !fileExtensionFilter.GetIgnoreFolders().Contains(Path.GetFileName(f).ToLower())))
+            if (progressBar != null)
+            {
+                progressBar.Maximum = traversableFolders.Count;
+                progressBar.Value = 0;
+            }
+
+            foreach (string folder in traversableFolders)
             {
                 comparisons.AddRange(
                     OpenFolder(folder,
@@ -117,6 +129,11 @@ namespace FolderDiffer
                         Path.GetFileName(f) == Path.GetFileName(folder))
                     .First())
                     );
+
+                if (progressBar != null)
+                {
+                    progressBar.Value++;
+                }
             }
 
             return comparisons
@@ -150,12 +167,12 @@ namespace FolderDiffer
             {
                 var missingFiles = files1
                     .Where(
-                        f => !files2.Select(p => 
+                        f => !files2.Select(p =>
                         Path.GetFileName(p)).Contains(Path.GetFileName(f)))
                     .Union(
                     files2
                     .Where(
-                        f => !files1.Select(p => 
+                        f => !files1.Select(p =>
                         Path.GetFileName(p)).Contains(Path.GetFileName(f)))
                     );
 
@@ -387,7 +404,7 @@ namespace FolderDiffer
 
         private string Diff(string c1, string c2)
         {
-            Func<DiffPlex.DiffBuilder.Model.ChangeType, string> TypeToString = x => 
+            Func<DiffPlex.DiffBuilder.Model.ChangeType, string> TypeToString = x =>
                 x == DiffPlex.DiffBuilder.Model.ChangeType.Deleted ? "- " :
                 x == DiffPlex.DiffBuilder.Model.ChangeType.Imaginary ? "<i>" :
                 x == DiffPlex.DiffBuilder.Model.ChangeType.Inserted ? "+" :
@@ -497,16 +514,21 @@ namespace FolderDiffer
 
         private void btnCompareAll_Click(object sender, EventArgs e)
         {
-            if (!model.Files.Any()) return;
+            if (!model.Files.Any())
+            {
+                return;
+            }
+
             progressBar1.Step = 1;
             progressBar1.Maximum = model.Files.Count();
             progressBar1.Value = 0;
+
             foreach (var f in model.Files)
             {
                 var d = ReadFileContents(f, false);
+
                 progressBar1.Value++;
                 progressBar1.Refresh();
-                string r = "";
             }
             var not_unknown = model.Files.Where(f => f.ContentDiff != ContentDiff.Unknown);
             var ls = not_unknown.Select(f => f.ContentDiff.ToString()).ToArray();
@@ -518,7 +540,7 @@ namespace FolderDiffer
 
         private void txtRegexFilter_TextChanged(object sender, EventArgs e)
         {
-            
+
         }
 
         private void txtRegexFilter_KeyPress(object sender, KeyPressEventArgs e)
@@ -659,6 +681,11 @@ namespace FolderDiffer
 
             txtModifiedAfterFilter.Text = mod;
             UpdateModifiedAfterFilter();
+        }
+
+        private void tableLayoutPanel1_Paint(object sender, PaintEventArgs e)
+        {
+
         }
     }
 }
